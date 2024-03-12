@@ -116,13 +116,14 @@ public class PlayerController : MonoBehaviour
         damaged = false;
         damagable = true;
     }
-    private void OnCollisionEnter(Collision other)
+    private void OnCollisionStay(Collision other)
     {
         if (other.gameObject.layer == 6 && damagable == true)
         {
             StartCoroutine(Damaged());
         }
     }
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.layer == 7)
