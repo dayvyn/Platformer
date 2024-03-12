@@ -5,7 +5,7 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     int speed = 5;
-    Rigidbody playerRB;
+    public Rigidbody playerRB;
     float inputAxisV;
     float inputAxisH;
     [SerializeField] Transform camPos;
@@ -18,7 +18,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] Animator anim;
     [SerializeField] BoxCollider box;
 
-    PlayerUI playerUIScript;
+    PlayerStats playerStatsScript;
 
     // Start is called before the first frame update
     void Start()
@@ -27,7 +27,7 @@ public class PlayerController : MonoBehaviour
         damaged = false;
         playerRB = GetComponent<Rigidbody>();
         box = GetComponent<BoxCollider>();
-        playerUIScript = GameObject.FindObjectOfType<PlayerUI>();
+        playerStatsScript = GameObject.FindObjectOfType<PlayerStats>();
     }
 
     // Update is called once per frame
@@ -36,15 +36,18 @@ public class PlayerController : MonoBehaviour
         RaycastHit ray;
         inputAxisV = Input.GetAxis("Vertical");
         inputAxisH = Input.GetAxis("Horizontal");
-        isGrounded = Physics.SphereCast(transform.position, box.size.y/2, Vector3.down, out ray, 1.5f, groundLayer);
+        isGrounded = Physics.SphereCast(transform.position, (box.size.y / 2), Vector3.down, out ray, 2, groundLayer);
 
+        if (transform.position.y < -20)
+        {
+            GameEnd();
+        }
 
         var movementVector = new Vector3(inputAxisH, 0, inputAxisV);
 
         anim.SetFloat("speed", movementVector.magnitude);
-        if (isGrounded && Input.GetKeyDown(KeyCode.Space))
+        if (isGrounded && Input.GetKeyDown(KeyCode.Space) && !hasJumped)
         {
-            playerRB.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             StartCoroutine(Jump());
         }
         if (movementVector.x != 0 || movementVector.z !=0)
@@ -97,7 +100,8 @@ public class PlayerController : MonoBehaviour
     IEnumerator Jump()
     {
         hasJumped = true;
-        yield return new WaitForSeconds(1);
+        playerRB.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        yield return new WaitForSeconds(1.2f);
         hasJumped = false;
     }
 
@@ -106,17 +110,29 @@ public class PlayerController : MonoBehaviour
         damaged = true;
         damagable = false;
         anim.SetTrigger("isDamaged");
-        playerUIScript.DecreaseHealth();
+        playerStatsScript.DecreaseHealth();
         yield return new WaitForSeconds(1.5f);
         anim.ResetTrigger("isDamaged");
         damaged = false;
         damagable = true;
     }
-    private void OnTriggerEnter(Collider other)
+    private void OnCollisionEnter(Collision other)
     {
         if (other.gameObject.layer == 6 && damagable == true)
         {
             StartCoroutine(Damaged());
         }
+    }
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.layer == 7)
+        {
+            Destroy(other.gameObject);
+            playerStatsScript.IncreaseScore();
+        }
+    }
+    void GameEnd()
+    {
+        FindAnyObjectByType<SceneManagement>().GetComponent<SceneManagement>().GameOver();
     }
 }
