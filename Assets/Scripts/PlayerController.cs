@@ -50,10 +50,7 @@ public class PlayerController : MonoBehaviour
         {
             StartCoroutine(Jump());
         }
-        if (movementVector.x != 0 || movementVector.z !=0)
-        {
-            anim.transform.forward = movementVector;
-        }
+       
 
         #region
         if (isGrounded)
@@ -78,7 +75,7 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-
+        transform.rotation = Quaternion.Euler(camPos.rotation.x, 0,0);
         Vector3 camRight = camPos.right;
         Vector3 camForward = camPos.forward;
 
@@ -91,11 +88,19 @@ public class PlayerController : MonoBehaviour
         Vector3 forwardCam = inputAxisV * camForward;
         Vector3 rightCam = inputAxisH * camRight;
 
+        Vector3 animationVector = (forwardCam + rightCam);
+
         Vector3 movementVector = (forwardCam + rightCam) * speed;
-        
+
         movementVector.y = playerRB.velocity.y;
 
         playerRB.velocity = movementVector;
+
+        if (inputAxisV != 0 || inputAxisH != 0)
+        {
+            anim.transform.forward = animationVector;
+        }
+        
     }
     IEnumerator Jump()
     {
